@@ -3,8 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load dataset
-csv_path = "all_df.csv"  # Pastikan file tersedia di path ini
+# Load datasetimport os
+csv_path = os.path.join(os.path.dirname(__file__), "all_df.csv")
 all_df = pd.read_csv(csv_path)
 
 # Konversi tanggal jika tersedia
