@@ -15,9 +15,10 @@ if 'year' in all_df.columns and 'month' in all_df.columns:
 # ================== NAVBAR KIRI (Sidebar) ==================
 with st.sidebar:
     # --- Menampilkan Foto, Nama, dan Cohort ---
-    st.image("https://i.imgur.com/your-profile-image.jpg", width=150)  # Ganti URL dengan foto Anda
+    st.image("https://drive.google.com/file/d/1xidwg5K3cvJdzGIy9YaB4ah7IXN1tzzz/view?usp=sharing", width=150)  # Ganti URL dengan foto Anda
     st.markdown("### **Jihan Aurelia**")
-    st.markdown("📚 Cohort: Dicoding Data Analysis 2024")
+    st.markdown("📚 Cohort: MC002D5X2442")
+    st.markdown("📚 Group: MC - 19")
     st.write("---")  # Garis pembatas
     
     # --- Sidebar untuk Filter Waktu ---
