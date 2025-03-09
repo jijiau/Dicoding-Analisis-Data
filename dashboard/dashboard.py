@@ -39,6 +39,8 @@ filtered_df = all_df[
 
 # ================== HEADER & METRICS ==================
 st.title("📊 Air Quality Dashboard")
+
+st.header("1. Bagaimana Tren Kualitas Udara Berubah Seiring Waktu di Berbagai Kota?")
 st.subheader("Ringkasan Kualitas Udara")
 
 col1, col2, col3 = st.columns(3)
@@ -85,6 +87,7 @@ st.write("""
 - Ini mungkin disebabkan oleh **pemanasan rumah tangga dan inversi suhu**, yang memperburuk polusi udara.  
 """)
 
+st.header("2. Bagaimana Kualitas Udara di Setiap Kota Memengaruhi Risiko Kesehatan Penduduk?")
 # ================== VISUALISASI 3: HARI DENGAN AQI "TIDAK SEHAT" ==================
 st.subheader("🔴 Jumlah Hari dengan AQI Tidak Sehat atau Lebih")
 aqi_unhealthy_days = filtered_df[filtered_df["AQI_Dominant"] > 100].groupby("year").size()
