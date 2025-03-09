@@ -75,8 +75,8 @@ ax.set_ylabel("Konsentrasi Polutan Dominan")
 st.pyplot(fig)
 
 # ================== VISUALISASI 3: HEATMAP KORELASI POLUTAN DENGAN AQI ==================
-st.subheader("🔍 Korelasi antara Polutan dan AQI")
-corr_matrix = filtered_df[['AQI_Dominant', 'PM2.5', 'PM10', 'NO2', 'SO2', 'CO', 'O3']].corr()
+st.subheader("🔍 Korelasi antara Parameter Cuaca dan AQI")
+corr_matrix = filtered_df[['AQI_Dominant', 'TEMP', 'PRES', 'DEWP', 'RAIN', 'WSPM']].corr()
 fig, ax = plt.subplots(figsize=(8, 5))
 sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
 st.pyplot(fig)
