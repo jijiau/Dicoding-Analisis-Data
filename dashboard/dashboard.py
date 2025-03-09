@@ -39,8 +39,6 @@ filtered_df = all_df[
 
 # ================== HEADER & METRICS ==================
 st.title("📊 Air Quality Dashboard")
-
-st.header("1. Bagaimana Tren Kualitas Udara Berubah Seiring Waktu di Berbagai Kota?")
 st.subheader("Ringkasan Kualitas Udara")
 
 col1, col2, col3 = st.columns(3)
@@ -57,6 +55,7 @@ with col3:
     avg_temp = round(filtered_df['TEMP'].mean(), 2)
     st.metric("🌡️ Rata-rata Suhu (°C)", value=avg_temp)
 
+st.header("1. Bagaimana Tren Kualitas Udara Berubah Seiring Waktu di Berbagai Kota?")
 # ================== VISUALISASI 1: TREND AQI PER KOTA ==================
 st.subheader("📈 Tren Perubahan Kualitas Udara per Kota")
 fig, ax = plt.subplots(figsize=(12, 5))
