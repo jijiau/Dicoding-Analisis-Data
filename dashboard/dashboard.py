@@ -88,12 +88,29 @@ st.write("""
 # ================== VISUALISASI 3: HARI DENGAN AQI "TIDAK SEHAT" ==================
 st.subheader("🔴 Jumlah Hari dengan AQI Tidak Sehat atau Lebih")
 aqi_unhealthy_days = filtered_df[filtered_df["AQI_Dominant"] > 100].groupby("year").size()
+max_unhealthy_year = aqi_unhealthy_days.idxmax()
 
+# Membuat palet warna dinamis (default abu-abu, tahun dengan jumlah tertinggi merah terang)
+colors = ["#D3D3D3" if year != max_unhealthy_year else "#FF5733" for year in aqi_unhealthy_days.index]
+
+# Plot dengan highlight
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x=aqi_unhealthy_days.index, y=aqi_unhealthy_days.values, palette="Reds", ax=ax)
-ax.set_xlabel("Tahun")
-ax.set_ylabel("Jumlah Hari dengan AQI Tidak Sehat")
+sns.barplot(x=aqi_unhealthy_days.index, y=aqi_unhealthy_days.values, palette=colors, ax=ax)
+ax.set_xlabel("Tahun", fontsize=12)
+ax.set_ylabel("Jumlah Hari dengan AQI Tidak Sehat", fontsize=12)
+ax.set_title("Highlight Tahun dengan Jumlah Hari Tidak Sehat Terbanyak", fontsize=14, fontweight="bold")
+
+# anotasi untuk tahun dengan jumlah tertinggi
+ax.annotate(
+    f"{max_unhealthy_year}: {aqi_unhealthy_days[max_unhealthy_year]} hari",
+    xy=(max_unhealthy_year, aqi_unhealthy_days[max_unhealthy_year]),
+    xytext=(max_unhealthy_year, aqi_unhealthy_days.max() + 5),
+    fontsize=12, fontweight="bold",
+    ha="center", arrowprops=dict(arrowstyle="->", color="black")
+)
+
 st.pyplot(fig)
+
 
 st.write("""
 💡 **Interpretasi:**  
@@ -102,12 +119,28 @@ st.write("""
 """)
 
 # ================== VISUALISASI 4: KORELASI POLUSI CO & O3 DENGAN AQI ==================
-st.subheader("🌫️ Hubungan Polusi CO dan O3 dengan AQI")
+st.subheader("🌫️ Korelasi antara Polutan dan IQR AQI")
+# menghitung IQR
+def calculate_iqr(series):
+    return np.percentile(series, 75) - np.percentile(series, 25)
+
+iqr_data = all_df.groupby(["month", "station"]).agg(
+    IQR_AQI=("AQI_Dominant", calculate_iqr),
+    PM2_5=("PM2.5", "mean"),
+    PM10=("PM10", "mean"),
+    NO2=("NO2", "mean"),
+    SO2=("SO2", "mean"),
+    CO=("CO", "mean"),
+    O3=("O3", "mean")
+).reset_index()
+
+corr_matrix = iqr_data[["IQR_AQI", "PM2_5", "PM10", "NO2", "SO2", "CO", "O3"]].corr()
+
+# Visualisasi heatmap
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.scatterplot(data=filtered_df, x="CO", y="AQI_Dominant", alpha=0.5, label="CO", color="blue", ax=ax)
-sns.scatterplot(data=filtered_df, x="O3", y="AQI_Dominant", alpha=0.5, label="O3", color="red", ax=ax)
-ax.set_xlabel("Konsentrasi Polutan")
-ax.set_ylabel("AQI Dominant")
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+ax.set_title("Korelasi antara Polutan dan IQR AQI", fontsize=14, fontweight="bold")
+
 st.pyplot(fig)
 
 st.write("""
