@@ -25,7 +25,7 @@ with st.sidebar:
     selected_years = st.multiselect("📆 Pilih Tahun:", all_df['year'].unique(), default=all_df['year'].unique())
     selected_months = st.multiselect("📅 Pilih Bulan:", all_df['month'].unique(), default=all_df['month'].unique())
     selected_cities = st.multiselect("🏙️ Pilih Kota:", all_df['station'].unique(), default=all_df['station'].unique())
-    
+
     # Filter AQI Range
     min_aqi, max_aqi = st.slider("⚠️ Filter AQI Range:", int(all_df["AQI_Dominant"].min()), int(all_df["AQI_Dominant"].max()), (int(all_df["AQI_Dominant"].min()), int(all_df["AQI_Dominant"].max())))
 
@@ -55,52 +55,66 @@ with col3:
     avg_temp = round(filtered_df['TEMP'].mean(), 2)
     st.metric("🌡️ Rata-rata Suhu (°C)", value=avg_temp)
 
-# ================== VISUALISASI 1: TREND AQI DOMINANT ==================
-st.subheader("📈 Tren Kualitas Udara di Berbagai Kota Seiring Waktu")
+# ================== VISUALISASI 1: TREND AQI PER KOTA ==================
+st.subheader("📈 Tren Perubahan Kualitas Udara per Kota")
 fig, ax = plt.subplots(figsize=(12, 5))
-sns.lineplot(data=filtered_df, x='month', y='AQI_Dominant', hue='year', marker="o", ax=ax, linewidth=2)
+sns.lineplot(data=filtered_df, x='year', y='AQI_Dominant', hue='station', marker="o", ax=ax, linewidth=2)
+ax.set_xlabel("Tahun")
+ax.set_ylabel("AQI Dominant")
+plt.legend(title="Kota", bbox_to_anchor=(1.05, 1), loc="upper left")
+st.pyplot(fig)
+
+st.write("""
+💡 **Interpretasi:**  
+- Secara umum, **terdapat penurunan AQI dari 2014 hingga 2017**, yang berarti **kualitas udara mengalami perbaikan**.  
+- Kota seperti `changping` menunjukkan **penurunan AQI lebih signifikan**, yang kemungkinan disebabkan oleh kebijakan pengurangan emisi dan regulasi lingkungan.  
+""")
+
+# ================== VISUALISASI 2: POLA MUSIMAN AQI ==================
+st.subheader("📆 Pola Musiman dalam Perubahan Kualitas Udara")
+fig, ax = plt.subplots(figsize=(12, 5))
+sns.boxplot(data=filtered_df, x='month', y='AQI_Dominant', palette="coolwarm", ax=ax)
 ax.set_xlabel("Bulan")
 ax.set_ylabel("AQI Dominant")
-ax.set_xticks(range(1, 13))
 ax.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"])
-plt.legend(title="Tahun")
 st.pyplot(fig)
 
-# ================== VISUALISASI 2: RISIKO KESEHATAN BERDASARKAN POLUTAN ==================
-st.subheader("🏥 Bagaimana Polusi Udara Memengaruhi Risiko Kesehatan?")
-fig, ax = plt.subplots(figsize=(12, 5))
-sns.violinplot(data=filtered_df, x='AQI_Dominant', y=dominant_pollutant, palette='coolwarm', ax=ax, inner='quartile')
-ax.set_xlabel("AQI Dominant")
-ax.set_ylabel("Konsentrasi Polutan Dominan")
-st.pyplot(fig)
+st.write("""
+💡 **Interpretasi:**  
+- **AQI cenderung lebih tinggi di musim dingin**, terutama di bulan Desember dan Januari.  
+- Ini mungkin disebabkan oleh **pemanasan rumah tangga dan inversi suhu**, yang memperburuk polusi udara.  
+""")
 
-# ================== VISUALISASI 3: HEATMAP KORELASI POLUTAN DENGAN AQI ==================
-st.subheader("🔍 Korelasi antara Parameter Cuaca dan AQI")
-corr_matrix = filtered_df[['AQI_Dominant', 'TEMP', 'PRES', 'DEWP', 'RAIN', 'WSPM']].corr()
+# ================== VISUALISASI 3: HARI DENGAN AQI "TIDAK SEHAT" ==================
+st.subheader("🔴 Jumlah Hari dengan AQI Tidak Sehat atau Lebih")
+aqi_unhealthy_days = filtered_df[filtered_df["AQI_Dominant"] > 100].groupby("year").size()
+
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+sns.barplot(x=aqi_unhealthy_days.index, y=aqi_unhealthy_days.values, palette="Reds", ax=ax)
+ax.set_xlabel("Tahun")
+ax.set_ylabel("Jumlah Hari dengan AQI Tidak Sehat")
 st.pyplot(fig)
 
-# ================== VISUALISASI 4: KATEGORISASI AQI ==================
-st.subheader("🌍 Distribusi Kualitas Udara berdasarkan Kategori AQI")
+st.write("""
+💡 **Interpretasi:**  
+- **Beberapa tahun memiliki lebih banyak hari dengan AQI buruk**, terutama di kota industri atau dengan kendaraan bermotor tinggi.  
+- **Dampaknya:** Risiko kesehatan meningkat bagi penduduk kota-kota ini.  
+""")
 
-# Definisi kategori AQI
-labels = ['Baik', 'Sedang', 'Tidak Sehat', 'Sangat Tidak Sehat', 'Berbahaya']
-bins = [0, 50, 100, 150, 200, 500]
-filtered_df['AQI_Category'] = pd.cut(filtered_df['AQI_Dominant'], bins=bins, labels=labels)
-
-# Hitung jumlah observasi per kategori
-aqi_counts = filtered_df['AQI_Category'].value_counts().sort_index()
-max_category = aqi_counts.idxmax()
-colors = ["#D3D3D3" if category != max_category else "#FF5733" for category in aqi_counts.index]
-
-# Plot dengan highlight
+# ================== VISUALISASI 4: KORELASI POLUSI CO & O3 DENGAN AQI ==================
+st.subheader("🌫️ Hubungan Polusi CO dan O3 dengan AQI")
 fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x=aqi_counts.index, y=aqi_counts.values, palette=colors, ax=ax)
-ax.set_xlabel("Kategori AQI", fontsize=12)
-ax.set_ylabel("Jumlah Observasi", fontsize=12)
-ax.set_title("Highlight Kategori AQI dengan Observasi Terbanyak", fontsize=14, fontweight="bold")
-
+sns.scatterplot(data=filtered_df, x="CO", y="AQI_Dominant", alpha=0.5, label="CO", color="blue", ax=ax)
+sns.scatterplot(data=filtered_df, x="O3", y="AQI_Dominant", alpha=0.5, label="O3", color="red", ax=ax)
+ax.set_xlabel("Konsentrasi Polutan")
+ax.set_ylabel("AQI Dominant")
 st.pyplot(fig)
+
+st.write("""
+💡 **Interpretasi:**  
+- **Polusi CO dan O3 memiliki korelasi yang signifikan dengan AQI**, menunjukkan bahwa mereka adalah kontributor utama polusi udara.  
+- CO sering berasal dari kendaraan bermotor, sedangkan O3 sering terbentuk dari reaksi kimia di atmosfer akibat polutan lainnya.  
+""")
+
 # ================== FOOTER ==================
 st.caption("© 2024 Air Quality Monitoring Dashboard")
