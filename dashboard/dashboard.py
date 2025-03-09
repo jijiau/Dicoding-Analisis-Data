@@ -83,15 +83,24 @@ st.pyplot(fig)
 
 # ================== VISUALISASI 4: KATEGORISASI AQI ==================
 st.subheader("🌍 Distribusi Kualitas Udara berdasarkan Kategori AQI")
+
+# Definisi kategori AQI
 labels = ['Baik', 'Sedang', 'Tidak Sehat', 'Sangat Tidak Sehat', 'Berbahaya']
 bins = [0, 50, 100, 150, 200, 500]
 filtered_df['AQI_Category'] = pd.cut(filtered_df['AQI_Dominant'], bins=bins, labels=labels)
-aqi_counts = filtered_df['AQI_Category'].value_counts().sort_index()
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(x=aqi_counts.index, y=aqi_counts.values, palette='Reds', ax=ax)
-ax.set_xlabel("Kategori AQI")
-ax.set_ylabel("Jumlah Observasi")
-st.pyplot(fig)
 
+# Hitung jumlah observasi per kategori
+aqi_counts = filtered_df['AQI_Category'].value_counts().sort_index()
+max_category = aqi_counts.idxmax()
+colors = ["#D3D3D3" if category != max_category else "#FF5733" for category in aqi_counts.index]
+
+# Plot dengan highlight
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(x=aqi_counts.index, y=aqi_counts.values, palette=colors, ax=ax)
+ax.set_xlabel("Kategori AQI", fontsize=12)
+ax.set_ylabel("Jumlah Observasi", fontsize=12)
+ax.set_title("Highlight Kategori AQI dengan Observasi Terbanyak", fontsize=14, fontweight="bold")
+
+st.pyplot(fig)
 # ================== FOOTER ==================
 st.caption("© 2024 Air Quality Monitoring Dashboard")
