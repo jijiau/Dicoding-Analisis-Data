@@ -1,10 +1,11 @@
-import os 
+import os
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load dataset
+# ================== LOAD DATA ==================
 csv_path = os.path.join(os.path.dirname(__file__), "all_df.csv")
 all_df = pd.read_csv(csv_path)
 
@@ -12,21 +13,29 @@ all_df = pd.read_csv(csv_path)
 if 'year' in all_df.columns and 'month' in all_df.columns:
     all_df['date'] = pd.to_datetime(all_df[['year', 'month']].assign(day=1))
 
-# ================== NAVBAR KIRI (Sidebar) ==================
+# ================== SIDEBAR (FILTER) ==================
 with st.sidebar:
-    # --- Menampilkan Foto, Nama, dan Cohort ---
     st.markdown("### **Jihan Aurelia**")
     st.markdown("📚 Cohort: MC002D5X2442")
     st.markdown("📚 Group: MC - 19")
-    st.write("---")  # Garis pembatas
+    st.write("---")
     
-    # --- Sidebar untuk Filter Waktu ---
     st.header("🗂 Filter Data")
+    
     selected_years = st.multiselect("📆 Pilih Tahun:", all_df['year'].unique(), default=all_df['year'].unique())
     selected_months = st.multiselect("📅 Pilih Bulan:", all_df['month'].unique(), default=all_df['month'].unique())
+    selected_cities = st.multiselect("🏙️ Pilih Kota:", all_df['station'].unique(), default=all_df['station'].unique())
+    
+    # Filter AQI Range
+    min_aqi, max_aqi = st.slider("⚠️ Filter AQI Range:", int(all_df["AQI_Dominant"].min()), int(all_df["AQI_Dominant"].max()), (int(all_df["AQI_Dominant"].min()), int(all_df["AQI_Dominant"].max())))
 
 # Filter dataset berdasarkan pilihan user
-filtered_df = all_df[(all_df['year'].isin(selected_years)) & (all_df['month'].isin(selected_months))]
+filtered_df = all_df[
+    (all_df['year'].isin(selected_years)) & 
+    (all_df['month'].isin(selected_months)) & 
+    (all_df['station'].isin(selected_cities)) &
+    (all_df['AQI_Dominant'].between(min_aqi, max_aqi))
+]
 
 # ================== HEADER & METRICS ==================
 st.title("📊 Air Quality Dashboard")
@@ -47,7 +56,7 @@ with col3:
     st.metric("🌡️ Rata-rata Suhu (°C)", value=avg_temp)
 
 # ================== VISUALISASI 1: TREND AQI DOMINANT ==================
-st.subheader("📈 Tren AQI Dominant per Bulan")
+st.subheader("📈 Tren Kualitas Udara di Berbagai Kota Seiring Waktu")
 fig, ax = plt.subplots(figsize=(12, 5))
 sns.lineplot(data=filtered_df, x='month', y='AQI_Dominant', hue='year', marker="o", ax=ax, linewidth=2)
 ax.set_xlabel("Bulan")
@@ -57,17 +66,17 @@ ax.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep
 plt.legend(title="Tahun")
 st.pyplot(fig)
 
-# ================== VISUALISASI 2: VARIASI AQI BERDASARKAN KONDISI CUACA ==================
-st.subheader("🌤️ Variasi AQI Berdasarkan Kondisi Cuaca")
+# ================== VISUALISASI 2: RISIKO KESEHATAN BERDASARKAN POLUTAN ==================
+st.subheader("🏥 Bagaimana Polusi Udara Memengaruhi Risiko Kesehatan?")
 fig, ax = plt.subplots(figsize=(12, 5))
-sns.violinplot(data=filtered_df, x='AQI_Dominant', y='wd', palette='coolwarm', ax=ax, inner='quartile')
+sns.violinplot(data=filtered_df, x='AQI_Dominant', y=dominant_pollutant, palette='coolwarm', ax=ax, inner='quartile')
 ax.set_xlabel("AQI Dominant")
-ax.set_ylabel("Arah Angin")
+ax.set_ylabel("Konsentrasi Polutan Dominan")
 st.pyplot(fig)
 
-# ================== VISUALISASI 3: HEATMAP KORELASI ==================
-st.subheader("🔍 Korelasi antara Parameter Cuaca dan AQI")
-corr_matrix = filtered_df[['AQI_Dominant', 'TEMP', 'PRES', 'DEWP', 'RAIN', 'WSPM']].corr()
+# ================== VISUALISASI 3: HEATMAP KORELASI POLUTAN DENGAN AQI ==================
+st.subheader("🔍 Korelasi antara Polutan dan AQI")
+corr_matrix = filtered_df[['AQI_Dominant', 'PM2.5', 'PM10', 'NO2', 'SO2', 'CO', 'O3']].corr()
 fig, ax = plt.subplots(figsize=(8, 5))
 sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
 st.pyplot(fig)
@@ -86,4 +95,3 @@ st.pyplot(fig)
 
 # ================== FOOTER ==================
 st.caption("© 2024 Air Quality Monitoring Dashboard")
-
